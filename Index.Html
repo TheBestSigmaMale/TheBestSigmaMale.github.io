@@ -1,0 +1,1294 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attraction Explorer Map</title>
+
+<meta property="og:title" content="Attraction Explorer Spectrum Map">
+<meta property="og:description" content="An interactive tool to safely map out and explore your unique romantic, physical, and sexual attraction metrics.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg: #F9F7F4;
+    --surface: #FFFFFF;
+    --border: #E8E4DF;
+    --text: #2B2621;
+    --muted: #827870;
+    --accent: #4A6B82;
+    --accent-soft: #EEF3F6;
+    --warm: #D18453;
+    --warm-soft: #FAF2EC;
+    --green: #468261;
+    --green-soft: #ECF5F0;
+    --purple: #795A94;
+    --purple-soft: #F3EEF6;
+    --pink: #B35C7A;
+    --pink-soft: #F6EEF1;
+    --radio-circle: #E8E4DF;
+  }
+
+  body.dark-mode {
+    --bg: #121110;
+    --surface: #1C1A18;
+    --border: #2E2B28;
+    --text: #EAE6E1;
+    --muted: #9C938B;
+    --accent: #628FA2;
+    --accent-soft: #1E282E;
+    --warm: #E29665;
+    --warm-soft: #2D1F16;
+    --green: #599E77;
+    --green-soft: #16241C;
+    --purple: #9674B2;
+    --purple-soft: #241A2B;
+    --pink: #C77391;
+    --pink-soft: #2B191E;
+    --radio-circle: #3E3A36;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1.2rem 5rem;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  #confettiCanvas {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 999; display: none;
+  }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cascadeReveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .top-controls {
+    width: 100%; max-width: 600px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; gap: 1rem;
+  }
+
+  .welcome-note {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.88rem; color: var(--accent); line-height: 1.6;
+    flex: 1;
+  }
+
+  .theme-toggle-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all 0.2s;
+  }
+  .theme-toggle-btn:hover { border-color: var(--accent); transform: scale(1.04); }
+
+  header { width: 100%; max-width: 600px; margin-bottom: 1.8rem; }
+  .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.1rem, 5vw, 2.8rem); line-height: 1.2; color: var(--text); margin-bottom: 0.6rem; }
+  .intro-text { font-size: 0.98rem; color: var(--muted); line-height: 1.6; }
+
+  .progress-container { width: 100%; max-width: 600px; display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; }
+  .progress-track { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s ease; width: 0%; }
+  .progress-text { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+
+  .q-card { 
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; 
+    padding: 2rem; width: 100%; max-width: 600px; margin-bottom: 1rem; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.01);
+    animation: cardReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .q-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+  .q-badge { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.25rem 0.7rem; border-radius: 99px; margin-bottom: 1rem; }
+  .badge-setup    { background: #E2E2E2; color: #555555; }
+  body.dark-mode .badge-setup { background: #333; color: #aaa; }
+  .badge-romantic { background: var(--warm-soft); color: var(--warm); }
+  .badge-physical { background: var(--pink-soft); color: var(--pink); }
+  .badge-sexual   { background: var(--accent-soft); color: var(--accent); }
+  .badge-energy   { background: var(--purple-soft); color: var(--purple); }
+  .q-text { font-family: 'DM Serif Display', serif; font-size: 1.35rem; line-height: 1.4; margin-bottom: 1.5rem; color: var(--text); }
+
+  .options-stack { display: flex; flex-direction: column; gap: 0.65rem; }
+  
+  .option-btn {
+    width: 100%; text-align: left; padding: 1rem 1.25rem; border-radius: 10px; 
+    border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; 
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500;
+    color: var(--text); transition: all 0.2s ease;
+    min-height: 44px; display: flex; align-items: center; gap: 0.8rem;
+  }
+  .option-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+  
+  .option-indicator {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--radio-circle);
+    display: inline-block; flex-shrink: 0; position: relative; transition: all 0.2s;
+  }
+  .option-btn.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .option-btn.selected .option-indicator {
+    border-color: var(--accent); background: var(--accent);
+  }
+  .option-btn.selected .option-indicator::after {
+    content: ''; position: absolute; width: 6px; height: 6px; background: #fff;
+    border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+
+  .nav-bar { display: flex; justify-content: space-between; width: 100%; max-width: 600px; margin-top: 0.5rem; gap: 0.5rem; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; border-radius: 10px; padding: 0.8rem 1.6rem; cursor: pointer; border: none; transition: all 0.15s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+  .alert-hint { font-size: 0.88rem; color: var(--warm); text-align: center; margin-top: 0.6rem; min-height: 1.5em; }
+
+  .result-container { width: 100%; max-width: 600px; }
+  .result-header { text-align: center; margin-bottom: 1.8rem; animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .result-identity-tag { font-family: 'DM Serif Display', serif; font-size: 2.5rem; color: var(--accent); margin-bottom: 0.6rem; line-height: 1.2; }
+  .result-subtitle { font-size: 1rem; color: var(--muted); line-height: 1.6; font-weight: 500; }
+  
+  .summary-box { background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 1.1rem; font-size: 0.92rem; line-height: 1.6; color: var(--text); margin-bottom: 2rem; animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; opacity: 0; }
+
+  .result-panel { margin-bottom: 2.2rem; opacity: 0; }
+  .panel-title { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.7rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .panel-intro { font-size: 0.9rem; color: var(--muted); line-height: 1.5; margin-bottom: 1.2rem; }
+
+  .panel-1 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards; }
+  .panel-2 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards; }
+  .panel-3 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards; }
+  .panel-4 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards; }
+  .panel-5 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards; }
+  .panel-6 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards; }
+
+  .matrix-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.01); }
+  .matrix-row { margin-bottom: 1.2rem; }
+  .matrix-row:last-child { margin-bottom: 0; }
+  .matrix-info { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text); margin-bottom: 0.4rem; font-weight: 500; }
+  .matrix-pct { font-size: 0.85rem; color: var(--muted); }
+  .matrix-track { height: 10px; background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+  .matrix-fill { height: 100%; border-radius: 99px; transition: width 1.1s cubic-bezier(0.16, 1, 0.3, 1); width: 0%; }
+  
+  .breakdown-details { margin-top: 0.5rem; font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+  .breakdown-details summary {
+    cursor: pointer; list-style: none; font-size: 0.78rem; text-transform: uppercase;
+    font-weight: 600; letter-spacing: 0.04em; color: var(--accent); display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .breakdown-details summary::-webkit-details-marker { display: none; }
+  .breakdown-details summary::before { content: '▸'; }
+  .breakdown-details[open] summary::before { content: '▾'; }
+  .breakdown-content { padding: 0.5rem 0.6rem; background: var(--bg); border-radius: 6px; margin-top: 0.3rem; }
+
+  .fill-romantic { background: var(--warm); }
+  .fill-physical { background: var(--pink); }
+  .fill-sexual   { background: var(--accent); }
+  .fill-bond     { background: var(--purple); }
+  .fill-fluid    { background: #616A7D; }
+  
+  .fill-masc { background: #557E96; }
+  .fill-fem { background: #DDA076; }
+  .fill-nb { background: #967BB0; }
+
+  .vector-track { height: 14px; background: linear-gradient(to right, #DDA076 0%, #E2E2E2 50%, #557E96 100%); border-radius: 99px; position: relative; border: 1px solid var(--border); margin-bottom: 0.4rem; }
+  body.dark-mode .vector-track { background: linear-gradient(to right, #A06F4D, #2B2B2B 50%, #3D647A); }
+  .vector-pin { position: absolute; width: 5px; height: 20px; background: var(--text); top: -4px; border-radius: 99px; transform: translateX(-50%); transition: left 1.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 4px rgba(0,0,0,0.2); }
+  .vector-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); font-weight: 600; padding: 0 0.1rem; text-transform: uppercase; letter-spacing: 0.02em; }
+
+  .kinsey-description { font-size: 0.85rem; color: var(--muted); line-height: 1.5; margin: 1.2rem 0 0; background: var(--bg); padding: 0.8rem; border-radius: 8px; border-left: 2px solid var(--muted); }
+  .kinsey-grid { display: flex; justify-content: space-between; gap: 4px; margin-top: 0.5rem; }
+  .kinsey-node { flex: 1; text-align: center; background: var(--bg); border: 1px solid var(--border); padding: 0.4rem 0.2rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600; color: var(--muted); transition: all 0.4s ease; }
+  .kinsey-node.active-node { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.04); }
+
+  .message-box { border-radius: 12px; padding: 1.2rem; font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.5rem; border-left: 4px solid transparent; }
+  .msg-alert { background: var(--purple-soft); border-color: var(--purple); color: var(--text); }
+  .msg-cross { background: var(--warm-soft); border-color: var(--warm); color: var(--text); }
+  .msg-ok { background: var(--green-soft); border-color: var(--green); color: var(--text); }
+
+  .pills-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .badge-pill { background: var(--accent-soft); border: 1px solid var(--border); color: var(--accent); border-radius: 99px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; text-transform: capitalize; cursor: pointer; transition: all 0.15s; }
+  .badge-pill:hover { transform: translateY(-1.5px); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 1.2rem; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-window {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.8rem; width: 100%; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transform: scale(0.95); transition: transform 0.25s ease;
+  }
+  .modal-overlay.active .modal-window { transform: scale(1); }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.6rem; text-transform: capitalize; }
+  .modal-desc { font-size: 0.92rem; line-height: 1.6; color: var(--text); margin-bottom: 1.5rem; }
+
+  .advice-list { margin-top: 0.6rem; padding-left: 1.2rem; }
+  .advice-list li { font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.5rem; color: var(--text); }
+
+  .hidden { display: none !important; }
+  @media (max-width: 500px) { .result-identity-tag { font-size: 2.1rem; } }
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="background: #FAF2EC; color: #D18453; padding: 2rem; text-align: center; font-family: sans-serif; border-bottom: 3px solid #D18453; width: 100%; box-sizing: border-box; font-weight: 500; font-size: 0.95rem;">
+    <strong>JavaScript is Required:</strong> This interactive spectrum explorer handles calculations locally inside your browser. Please enable JavaScript in your browser settings to continue.
+  </div>
+</noscript>
+
+<canvas id="confettiCanvas"></canvas>
+
+<div class="top-controls">
+  <div class="welcome-note">
+    This quiz breaks down your feelings safely. Progress maps automatically save locally so you can return anytime.
+  </div>
+  <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle theme">🌓</button>
+</div>
+
+<header id="mainHeader">
+  <div class="eyebrow">Understand Your Attraction</div>
+  <h1>Attraction<br>Explorer</h1>
+  <p class="intro-text">Answer honestly to see how your different feelings map out on the spectrum.</p>
+</header>
+
+<div class="progress-container" id="progressContainer">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <span class="progress-text" id="progressLabel" aria-live="polite">0 / 0</span>
+</div>
+
+<div id="quizSection" aria-live="polite">
+  <div class="q-card" id="qCard" tabindex="-1"></div>
+  <div class="alert-hint" id="hint"></div>
+  <div class="nav-bar">
+    <button class="btn btn-secondary" id="prevBtn" onclick="goBack()">Back</button>
+    <button class="btn btn-secondary" id="skipBtn" onclick="skipQuestion()">Skip / Unsure</button>
+    <button class="btn btn-primary" id="nextBtn" onclick="goNext()">Next</button>
+  </div>
+</div>
+
+<div id="resultSection" class="hidden">
+  <div class="result-container">
+    <div class="result-header" aria-live="polite">
+      <div class="eyebrow">Your Core Results Map</div>
+      <div class="result-identity-tag" id="resIdentity">Calculating...</div>
+      <div class="result-subtitle" id="resSubtitle"></div>
+    </div>
+    
+    <div class="summary-box" id="resSummary"></div>
+
+    <div id="splitAttractionPanel" class="result-panel panel-1"></div>
+
+    <div class="result-panel panel-2" id="vectorPanel">
+      <div class="panel-title">Attraction Balance & The Kinsey Scale</div>
+      <div class="panel-intro">Where your feelings land on the spectrum between feminine and masculine expressions:</div>
+      <div class="matrix-card">
+        <div class="matrix-info" style="margin-bottom: 0.6rem;"><span style="font-size: 0.85rem;">Your Balance Score:</span><span id="vectorNum" style="font-weight:600; color:var(--accent);">0.0</span></div>
+        <div class="vector-track"><div class="vector-pin" id="vectorPin"></div></div>
+        <div class="vector-labels">
+          <span>0 (Only Attracted to Women)</span>
+          <span>5 (Equally Attracted)</span>
+          <span>10 (Only Attracted to Men)</span>
+        </div>
+        
+        <div style="margin-top: 1.5rem; font-size: 0.82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;">Your Kinsey Scale Match:</div>
+        <div class="kinsey-grid" id="kinseyBar">
+          <div class="kinsey-node" id="k0">K0</div>
+          <div class="kinsey-node" id="k1">K1</div>
+          <div class="kinsey-node" id="k2">K2</div>
+          <div class="kinsey-node" id="k3">K3</div>
+          <div class="kinsey-node" id="k4">K4</div>
+          <div class="kinsey-node" id="k5">K5</div>
+          <div class="kinsey-node" id="k6">K6</div>
+        </div>
+
+        <div class="kinsey-description">
+          <strong>What is the Kinsey Scale?</strong> Developed by researchers, it's a classic scale from <strong>0 to 6</strong> that shows how your attraction balances between different genders. <strong>0</strong> means you're strictly attracted to a different gender (straight), <strong>6</strong> means strictly attracted to the same gender (gay/lesbian), and <strong>3</strong> is perfectly bisexual.
+        </div>
+      </div>
+    </div>
+
+    <div class="result-panel panel-3">
+      <div class="panel-title">How Strongly You Feel Each Type of Attraction</div>
+      <div class="panel-intro">Your current tracking levels for individual styles of connection:</div>
+      <div class="matrix-card">
+        <div class="matrix-row">
+          <div class="matrix-info"><span>Romantic Attraction (Wanting dates, relationships, or love)</span><span class="matrix-pct" id="pctRomantic">0%</span></div>
+          <div class="matrix-track"><div class="matrix-fill fill-romantic" id="barRomantic"></div></div>
+          <details class="breakdown-details"><summary>Detailed Breakdown</summary><div class="breakdown-content">Calculated based on your configuration metrics for emotional longings, future planning vectors, core attachment speed values, and baseline relationship ideation questions.</div></details>
+        </div>
+        <div class="matrix-row">
+          <div class="matrix-info"><span>Physical Attraction (Drawn to style, appearance, or presence)</span><span class="matrix-pct" id="pctPhysical">0%</span></div>
+          <div class="matrix-track"><div class="matrix-fill fill-physical" id="barPhysical"></div></div>
+          <details class="breakdown-details"><summary>Detailed Breakdown</summary><div class="breakdown-content">Evaluated via responsive indices measuring non-sexual closeness desires, visual focus responses on presence, and sensory/aesthetic target parameters.</div></details>
+        </div>
+        <div class="matrix-row">
+          <div class="matrix-info"><span>Sexual Attraction (Feeling a direct drive to be physically intimate)</span><span class="matrix-pct" id="pctSexual">0%</span></div>
+          <div class="matrix-track"><div class="matrix-fill fill-sexual" id="barSexual"></div></div>
+          <details class="breakdown-details"><summary>Detailed Breakdown</summary><div class="breakdown-content">Formulated from individual response metrics regarding baseline intimacy drive, instantaneous alignment capabilities, and contextual target parameters.</div></details>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-panel panel-4">
+      <div class="panel-title">Who You Pull Toward</div>
+      <div class="panel-intro">When you feel a spark, here is how much your feelings lean toward different expressions of gender:</div>
+      <div class="matrix-card" id="targetCard"></div>
+    </div>
+
+    <div class="result-panel panel-5">
+      <div class="panel-title">Timing & Comfort Requirements</div>
+      <div class="panel-intro">This shows what triggers your attraction, like taking time to build a close bond rather than feeling it instantly:</div>
+      <div class="matrix-card">
+        <div class="matrix-row">
+          <div class="matrix-info"><span>Bond Dependency (Desire clicks after establishing emotional safety)</span><span class="matrix-pct" id="pctDemi">0%</span></div>
+          <div class="matrix-track"><div class="matrix-fill fill-bond" id="barDemi"></div></div>
+          <details class="breakdown-details"><summary>Detailed Breakdown</summary><div class="breakdown-content">Sourced from answers measuring cross-track alignment decay during safety drops, connection acceleration metrics, and alignment with modern pacing.</div></details>
+        </div>
+        <div class="matrix-row">
+          <div class="matrix-info"><span>Fluctuation / Fluidity (Attraction naturally comes and goes in waves)</span><span class="matrix-pct" id="pctFluid">0%</span></div>
+          <div class="matrix-track"><div class="matrix-fill fill-fluid" id="barFluid"></div></div>
+          <details class="breakdown-details"><summary>Detailed Breakdown</summary><div class="breakdown-content">Traced from variance indicators recording short-term shift measurements and predictable cyclical changes throughout a multi-month period.</div></details>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-panel panel-6">
+      <div class="panel-title">Your Personal Insights & Next Steps</div>
+      <div class="matrix-card" style="background: var(--bg); border-color: var(--border);" id="adviceCardContainer">
+        <div id="latencyMessageBox"></div>
+        <div style="font-size:0.85rem; font-weight:600; color:var(--text); text-transform:uppercase; margin-bottom:0.4rem;">Your Action Plan:</div>
+        <ul class="advice-list" id="adviceList"></ul>
+      </div>
+    </div>
+
+    <div class="result-panel panel-6">
+      <div class="panel-title">Every Matching Label</div>
+      <div class="matrix-card">
+        <div style="font-size:0.92rem; color:var(--muted); line-height:1.6;">Based on your unique scores, here is every identity term that safely applies to you. <strong>Click any pill to open the definition:</strong></div>
+        <div class="pills-group" id="taxonomyPills"></div>
+      </div>
+    </div>
+
+    <div class="nav-bar" style="justify-content: center; margin-top: 3rem; gap: 1rem;">
+      <button class="btn btn-secondary" onclick="resetExplorer()">Take Quiz Again</button>
+      <button class="btn btn-primary" onclick="exportReport()">Download My Map (.txt)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="glossaryModal" onclick="closeModal(event)">
+  <div class="modal-window" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modalTitle">Label Name</div>
+    <div class="modal-desc" id="modalDesc">Definition goes here...</div>
+    <button class="btn btn-primary" style="width: 100%;" onclick="closeModal(null)">Got It</button>
+  </div>
+</div>
+
+<script>
+// Fail-Safe LocalStorage Fallback Proxy
+const safeStorage = {
+  _backupMemory: {},
+  getItem(key) {
+    try { return localStorage.getItem(key); } catch (e) { return this._backupMemory[key] || null; }
+  },
+  setItem(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { this._backupMemory[key] = String(value); }
+  },
+  removeItem(key) {
+    try { localStorage.removeItem(key); } catch (e) { delete this._backupMemory[key]; }
+  }
+};
+
+const masterQuestions = [
+  {
+    id: "user_gender",
+    text: "To make sure your final labels match up correctly, what is your gender identity?",
+    chip: "setup",
+    labels: ["I identify as a Woman", "I identify as a Man", "I identify as Non-Binary / Genderqueer"],
+    weight: { user_is_woman: [100, 0, 0], user_is_man: [0, 100, 0], user_is_nb: [0, 0, 100] }
+  },
+  {
+    id: "rom_1",
+    text: "How often do you notice yourself forming romantic crushes or daydreaming emotionally about someone?",
+    chip: "romantic",
+    labels: ["Never, that emotional pull doesn't really happen to me", "Very rarely, maybe a couple of times ever", "Occasionally, under the right conditions", "Frequently, I form emotional attachments easily"],
+    weight: { global_romantic: [0, 25, 65, 100] }
+  },
+  {
+    id: "rom_2",
+    text: "When thinking about your future, how important is it to have a romantic partner?",
+    chip: "romantic",
+    labels: ["Not important at all / I enjoy complete independence", "It would be nice, but I am totally comfortable alone", "It is moderately important to my happiness", "It is a top priority for my life path"],
+    weight: { global_romantic: [0, 30, 70, 100] }
+  },
+  {
+    id: "rom_3",
+    text: "Do you experience an internal draw to share romantic experiences (like dates or a relationship) with men?",
+    chip: "romantic",
+    labels: ["No, never", "Sometimes, or in very specific moments", "Yes, I feel this naturally"],
+    weight: { target_masc: [0, 40, 100], track_masc_romantic: [0, 40, 100] }
+  },
+  {
+    id: "rom_4",
+    text: "Do you experience an internal draw to share romantic experiences (like dates or a relationship) with women?",
+    chip: "romantic",
+    labels: ["No, never", "Sometimes, or in very specific moments", "Yes, I feel this naturally"],
+    weight: { target_fem: [0, 40, 100], track_fem_romantic: [0, 40, 100] }
+  },
+  {
+    id: "rom_5",
+    text: "When you hear a love song or read a romantic story, do you want that experience for yourself?",
+    chip: "romantic",
+    labels: ["I don't connect with it or want it at all", "I understand it, but rarely feel that longing myself", "I easily connect with it and deeply desire it"],
+    weight: { global_romantic: [0, 45, 100] }
+  },
+  {
+    id: "rom_6",
+    text: "How quickly do you find yourself feeling romantically attached when starting to see someone new?",
+    chip: "romantic",
+    labels: ["I never feel that way", "It takes a very long time and a deep sense of safety", "It happens reasonably fast if our vibes match perfectly"],
+    weight: { global_romantic: [0, 50, 100], demi_spec: [0, 80, 10] }
+  },
+  {
+    id: "rom_8",
+    text: "If you could design your dream life, would it involve sharing a home and an emotional partnership with someone?",
+    chip: "romantic",
+    labels: ["No, I prefer living entirely independently", "Maybe a shared house, but keeping my own clear space", "Yes, a deeply shared life is my ideal scenario"],
+    weight: { global_romantic: [0, 50, 100] }
+  },
+  {
+    id: "phys_1",
+    text: "When looking directly at a man, do you ever feel an immediate visual pull to his appearance?",
+    chip: "physical",
+    labels: ["No, looks don't catch my focus at all", "Occasionally or mildly", "Yes, quite often and clearly"],
+    weight: { target_masc: [0, 50, 100], track_masc_physical: [0, 50, 100] }
+  },
+  {
+    id: "phys_2",
+    text: "When looking directly at a woman, do you ever feel an immediate visual pull to her appearance?",
+    chip: "physical",
+    labels: ["No, looks don't catch my focus at all", "Occasionally or mildly", "Yes, quite often and clearly"],
+    weight: { target_fem: [0, 50, 100], track_fem_physical: [0, 50, 100] }
+  },
+  {
+    id: "phys_3",
+    text: "How much comfort or physical desire do you seek through non-sexual touch, like hugging or cuddling?",
+    chip: "physical",
+    labels: ["None / I prefer keeping my physical distance", "A little bit, only with highly selected individuals", "A lot, safe closeness is highly valuable to me"],
+    weight: { track_general_physical: [0, 50, 100] }
+  },
+  {
+    id: "phys_4",
+    text: "Do you experience visual or physical attraction toward people who look non-binary or androgynous?",
+    chip: "physical",
+    labels: ["No, not at all", "Somewhat / occasionally", "Yes, definitely"],
+    weight: { target_nb: [0, 50, 100], track_nb_physical: [0, 50, 100] }
+  },
+  {
+    id: "phys_5",
+    text: "Does a person's voice, scent, or general presence provoke a noticeable physical pull inside you?",
+    chip: "physical",
+    labels: ["Never", "Only if I am already very comfortable and close with them", "Yes, quite easily"],
+    weight: { track_general_physical: [10, 60, 100], demi_spec: [0, 80, 0] }
+  },
+  {
+    id: "phys_6",
+    text: "How much does someone's confidence, humor, or energy pull you physically compared to just their looks?",
+    chip: "physical",
+    labels: ["It doesn't affect me much", "It helps, but physical appearance is still the main draw", "Their energy and vibe are almost entirely what creates the pull"],
+    weight: { track_general_physical: [30, 65, 100], demi_spec: [0, 30, 80] }
+  },
+  {
+    id: "phys_7",
+    text: "When sitting very close to someone you like, do you feel an urge to move even closer or touch them?",
+    chip: "physical",
+    labels: ["No, I prefer keeping my personal space bubbles intact", "Occasionally, if the moment feels highly secure", "Yes, I notice an immediate magnet-like pull"],
+    weight: { track_general_physical: [0, 50, 100] }
+  },
+  {
+    id: "phys_9",
+    text: "How much does seeing an attractive actor, model, or celebrity on screen spark a physical sensation in your body?",
+    chip: "physical",
+    labels: ["None at all, they just look like a nice painting to me", "A mild appreciation, but no real physical reaction", "A distinct, active physical pull or spike of interest"],
+    weight: { track_general_physical: [0, 40, 100] }
+  },
+  {
+    id: "sex_1",
+    text: "Do you experience immediate sexual desires just looking at someone you don't know personally?",
+    chip: "sexual",
+    labels: ["Never, that doesn't happen to me", "Extremely rarely", "Occasionally", "Regularly"],
+    weight: { track_general_sexual: [10, 35, 70, 100], ace_spec: [100, 60, 20, 0] }
+  },
+  {
+    id: "sex_2",
+    text: "Could you see yourself wanting intimacy with a man without knowing him well first?",
+    chip: "sexual",
+    labels: ["No, completely impossible", "Highly unlikely without a strong background bond", "Yes, chemistry works completely fine on its own"],
+    weight: { target_masc: [0, 40, 100], demi_spec: [90, 40, 0], track_masc_sexual: [0, 50, 100] }
+  },
+  {
+    id: "sex_3",
+    text: "Could you see yourself wanting intimacy with a woman without knowing her well first?",
+    chip: "sexual",
+    labels: ["No, completely impossible", "Highly unlikely without a strong background bond", "Yes, chemistry works completely fine on its own"],
+    weight: { target_fem: [0, 40, 100], demi_spec: [90, 40, 0], track_fem_sexual: [0, 50, 100] }
+  },
+  {
+    id: "sex_4",
+    text: "When you do have sexual or intimate feelings, how much do they point toward men overall?",
+    chip: "sexual",
+    labels: ["Not at all", "A small amount", "A moderate amount", "Completely toward men"],
+    weight: { target_masc: [0, 30, 70, 100], track_masc_sexual: [0, 30, 70, 100] }
+  },
+  {
+    id: "sex_5",
+    text: "When you do have sexual or intimate feelings, how much do they point toward women overall?",
+    chip: "sexual",
+    labels: ["Not at all", "A small amount", "A moderate amount", "Completely toward women"],
+    weight: { target_fem: [0, 30, 70, 100], track_fem_sexual: [0, 30, 70, 100] }
+  },
+  {
+    id: "sex_6",
+    text: "How active or present is your default sexual drive on an ordinary week?",
+    chip: "sexual",
+    labels: ["Quiet or completely inactive", "Very low or subtle background noise", "Moderate and predictable", "Highly active and urgent"],
+    weight: { track_general_sexual: [5, 25, 65, 100], gray_spec: [50, 100, 40, 0] }
+  },
+  {
+    id: "sex_7",
+    text: "If a deeply trusted partner became emotionally distant or detached for a long time, what happens to your physical desire for them?",
+    chip: "sexual",
+    labels: ["It stays mostly the same; physical drive is separate", "It drops slightly but the physical urge is still there", "It completely vanishes; without the emotional bond, the switch turns off"],
+    weight: { demi_spec: [0, 40, 100], track_general_sexual: [100, 70, 20] }
+  },
+  {
+    id: "sex_8",
+    text: "Have you ever experienced physical drive or arousal but felt absolutely no desire to direct it toward a real person?",
+    chip: "sexual",
+    labels: ["No, my drive is always focused on someone", "Sometimes / occasionally", "Yes, frequently; my body's drive feels completely disconnected from other people"],
+    weight: { ace_spec: [0, 40, 90], track_general_sexual: [100, 50, 10] }
+  },
+  {
+    id: "energy_1",
+    text: "How much mental effort have you spent trying to analyze or 'figure out' why you feel attraction differently?",
+    chip: "energy",
+    labels: ["Very little / it feels straightforward", "A moderate amount at points", "An immense amount of private mental energy"],
+    weight: { energy_score: [0, 50, 100] }
+  },
+  {
+    id: "energy_3",
+    text: "Have you ever forced a crush or pretended to find someone attractive just to fit in with friends?",
+    chip: "energy",
+    labels: ["No", "Once or twice", "Yes, I have masked my true feelings quite often"],
+    weight: { energy_score: [0, 45, 100] }
+  },
+  {
+    id: "energy_4",
+    text: "Do you find yourself holding back in conversations about dating out of caution or worry about being misunderstood?",
+    chip: "energy",
+    labels: ["No, I share smoothly", "Occasionally cautious", "Frequently, I carefully filter what I say"],
+    weight: { energy_score: [0, 50, 100] }
+  },
+  {
+    id: "energy_5",
+    text: "How much does your attraction cycle, change, or surprise you over the span of a few months?",
+    chip: "energy",
+    labels: ["It is totally fixed and predictable", "It shows slight shifts", "It is highly fluid and changes based on different life factors"],
+    weight: { fluid_modifier: [0, 45, 100] }
+  },
+  {
+    id: "energy_6",
+    text: "Do you feel an internal exhaustion or burnout regarding modern 'swipe' dating culture expectations?",
+    chip: "energy",
+    labels: ["No, feels normal", "Slightly standard dating fatigue", "Yes, the fast pacing feels deeply misaligned with how my feelings work"],
+    weight: { energy_score: [0, 40, 100], demi_spec: [10, 40, 80] }
+  }
+];
+
+const glossaryDefinitions = {
+  "gay": "Attraction entirely allocated to individuals of the same/masculine gender parameters.",
+  "lesbian": "Attraction fully directed to individuals identifying inside female or feminine presence lines.",
+  "straight": "Attraction tracking cleanly toward individuals of a different or opposing gender identity background.",
+  "mostly gay": "A strong primary draw toward the same gender expression with trace exceptions or highly specific variations.",
+  "mostly straight": "A strong primary draw toward different gender expressions with minor or highly specific exceptions.",
+  "mostly lesbian": "A strong primary draw toward feminine gender lanes with small localized variant instances.",
+  "bisexual": "An inherent capability to experience romantic, physical, or sexual draws toward two or more distinct genders.",
+  "pansexual": "Attraction indices that pull toward human entities universally, where target gender definitions carry zero weight.",
+  "asexual": "Operating with quiet, subtle, or entirely absent active internal desires for physical intimacy/sexual target parameters.",
+  "aromantic": "Processing thin, quiet, or absent desires to form romantic loops, dates, traditional partnerships, or falling in love.",
+  "demisexual": "Intimacy desire keys remain completely locked until an established, deeply verified level of emotional security is built.",
+  "graysexual": "Positioned inside the gray zone between standard attraction loops and asexual patterns; felt rarely or mildly.",
+  "fluid": "Attraction coordinates that naturally change shape, pulse, or swap primary orientations across historical periods.",
+  "androphilic": "A structural blueprint showing a precise primary pull toward masculine visual, energetic, or physical styles.",
+  "gynephilic": "A structural blueprint showing a precise primary pull toward feminine visual, energetic, or physical styles.",
+  "split-attraction": "When your structural romantic desires target one gender stream while your sexual wiring pulls toward another."
+};
+
+let activeIndex = 0;
+let userChoices = {};
+let finalScoreDataSnapshot = null;
+
+function initTheme() {
+  if (safeStorage.getItem('explorerDarkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+  }
+}
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  safeStorage.setItem('explorerDarkMode', isDark);
+}
+
+function saveExplorerState() {
+  safeStorage.setItem('attractionExplorerState_v75', JSON.stringify({ activeIndex, userChoices }));
+}
+
+function loadExplorerState() {
+  const savedState = safeStorage.getItem('attractionExplorerState_v75');
+  if (savedState) {
+    try {
+      const parsed = JSON.parse(savedState);
+      activeIndex = parsed.activeIndex;
+      userChoices = parsed.userChoices;
+      return true;
+    } catch(e) { return false; }
+  }
+  return false;
+}
+
+function initializeExplorer() {
+  initTheme();
+  if (!loadExplorerState()) {
+    activeIndex = 0;
+    userChoices = {};
+  }
+  if (activeIndex >= masterQuestions.length) {
+    compileTopologyResults();
+  } else {
+    renderQuestionBlock();
+  }
+}
+
+function renderQuestionBlock() {
+  const currentQuestion = masterQuestions[activeIndex];
+  const cardElement = document.getElementById('qCard');
+  
+  cardElement.style.animation = 'none';
+  cardElement.offsetHeight; 
+  cardElement.style.animation = 'cardReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+
+  let html = `<span class="q-badge badge-${currentQuestion.chip}">${currentQuestion.chip} category</span>`;
+  html += `<div class="q-text">${currentQuestion.text}</div>`;
+  html += `<div class="options-stack">`;
+  
+  currentQuestion.labels.forEach((labelText, idx) => {
+    const isSelected = userChoices[currentQuestion.id] === idx ? 'selected' : '';
+    html += `
+      <button class="option-btn ${isSelected}" onclick="captureSelection(${idx})">
+        <span class="option-indicator"></span>
+        <span>${labelText}</span>
+      </button>
+    `;
+  });
+  html += `</div>`;
+  
+  cardElement.innerHTML = html;
+  cardElement.focus();
+
+  const progressionPct = (activeIndex / masterQuestions.length) * 100;
+  document.getElementById('progressFill').style.width = `${progressionPct}%`;
+  document.getElementById('progressLabel').textContent = `${activeIndex + 1} of ${masterQuestions.length}`;
+  document.getElementById('prevBtn').style.visibility = activeIndex === 0 ? 'hidden' : 'visible';
+  document.getElementById('nextBtn').textContent = activeIndex === masterQuestions.length - 1 ? 'See Results' : 'Next';
+  document.getElementById('hint').textContent = '';
+}
+
+function captureSelection(index) {
+  const currentQuestion = masterQuestions[activeIndex];
+  userChoices[currentQuestion.id] = index;
+  saveExplorerState(); 
+  renderQuestionBlock();
+}
+
+function skipQuestion() {
+  const currentQuestion = masterQuestions[activeIndex];
+  userChoices[currentQuestion.id] = -1;
+  saveExplorerState();
+  advancePointer();
+}
+
+function goNext() {
+  const currentQuestion = masterQuestions[activeIndex];
+  if (userChoices[currentQuestion.id] === undefined) {
+    document.getElementById('hint').textContent = 'Please choose an option or skip to continue.';
+    return;
+  }
+  advancePointer();
+}
+
+function advancePointer() {
+  if (activeIndex < masterQuestions.length - 1) {
+    activeIndex++;
+    saveExplorerState();
+    renderQuestionBlock();
+  } else {
+    compileTopologyResults();
+  }
+}
+
+function goBack() {
+  if (activeIndex > 0) {
+    activeIndex--;
+    saveExplorerState();
+    renderQuestionBlock();
+  }
+}
+
+function openGlossary(term) {
+  const titleEl = document.getElementById('modalTitle');
+  const descEl = document.getElementById('modalDesc');
+  const overlay = document.getElementById('glossaryModal');
+  titleEl.textContent = term;
+  descEl.textContent = glossaryDefinitions[term] || "Definition not classified within base engine specifications.";
+  overlay.classList.add('active');
+}
+
+function closeModal(e) {
+  document.getElementById('glossaryModal').classList.remove('active');
+}
+
+function runCompletionConfetti() {
+  const canvas = document.getElementById("confettiCanvas");
+  const ctx = canvas.getContext("2d");
+  canvas.style.display = "block";
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  const colors = ["#4A6B82", "#D18453", "#468261", "#795A94", "#B35C7A"];
+  const particles = [];
+  for (let i = 0; i < 110; i++) {
+    particles.push({
+      x: width / 2, y: height + 20,
+      vx: (Math.random() - 0.5) * 15, vy: -Math.random() * 16 - 10,
+      size: Math.random() * 6 + 4, color: colors[Math.floor(Math.random() * colors.length)],
+      gravity: 0.3, rotation: Math.random() * 360, rSpeed: Math.random() * 4 - 2
+    });
+  }
+  function renderLoop() {
+    ctx.clearRect(0, 0, width, height);
+    let ongoing = false;
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += p.gravity; p.rotation += p.rSpeed;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); ctx.restore();
+      if (p.y < height + 40) ongoing = true;
+    });
+    if (ongoing) requestAnimationFrame(renderLoop); else canvas.style.display = "none";
+  }
+  renderLoop();
+}
+
+function compileTopologyResults() {
+  activeIndex = masterQuestions.length; 
+  saveExplorerState();
+  
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('quizSection').classList.add('hidden');
+  document.getElementById('mainHeader').classList.add('hidden');
+  document.getElementById('progressContainer').classList.add('hidden');
+  document.getElementById('resultSection').classList.remove('hidden');
+
+  let counts = {
+    user_is_woman: 0, user_is_man: 0, user_is_nb: 0,
+    global_romantic: [], track_masc_romantic: [], track_fem_romantic: [],
+    track_masc_physical: [], track_fem_physical: [], track_nb_physical: [], track_general_physical: [],
+    track_masc_sexual: [], track_fem_sexual: [], track_general_sexual: [],
+    target_masc: [], target_fem: [], target_nb: [],
+    ace_spec: [], demi_spec: [], gray_spec: [], energy_score: [], fluid_modifier: []
+  };
+
+  masterQuestions.forEach(q => {
+    const pickedIdx = userChoices[q.id];
+    if (pickedIdx !== undefined && pickedIdx !== -1) {
+      for (let axisKey in q.weight) {
+        if (Array.isArray(counts[axisKey])) {
+          counts[axisKey].push(q.weight[axisKey][pickedIdx]);
+        } else { counts[axisKey] = q.weight[axisKey][pickedIdx]; }
+      }
+    }
+  });
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b) => a+b, 0) / arr.length) : 0;
+
+  const targetMasc  = avg(counts.target_masc);
+  const targetFem   = avg(counts.target_fem);
+  const targetNb    = avg(counts.target_nb);
+  const pctRomantic = avg(counts.global_romantic);
+  
+  const mascPhysAvg = avg(counts.track_masc_physical);
+  const femPhysAvg = avg(counts.track_fem_physical);
+  const generalPhysAvg = avg(counts.track_general_physical);
+  const pctPhysical = Math.max(mascPhysAvg, femPhysAvg, generalPhysAvg);
+
+  const mascSexAvg = avg(counts.track_masc_sexual);
+  const femSexAvg = avg(counts.track_fem_sexual);
+  const generalSexAvg = avg(counts.track_general_sexual);
+  const pctSexual = Math.max(mascSexAvg, femSexAvg, generalSexAvg);
+  
+  const aceScore    = avg(counts.ace_spec);
+  const demiScore   = avg(counts.demi_spec);
+  const grayScore   = avg(counts.gray_spec);
+  const fluidScore  = avg(counts.fluid_modifier);
+  const processingEnergy = avg(counts.energy_score);
+
+  const romMasc = avg(counts.track_masc_romantic);
+  const romFem = avg(counts.track_fem_romantic);
+
+  const isAsexualBaseline = pctSexual <= 20;
+  let vectorValue = 5.0; 
+  let kinseyLabelValue = "N/A";
+
+  if ((targetMasc === 0 && targetFem === 0) || isAsexualBaseline) {
+    document.getElementById('vectorPanel').classList.add('hidden'); 
+  } else {
+    document.getElementById('vectorPanel').classList.remove('hidden');
+    const totalBinaryPull = targetMasc + targetFem;
+    if (totalBinaryPull > 0) { vectorValue = parseFloat(((targetMasc / totalBinaryPull) * 10).toFixed(1)); }
+    
+    document.getElementById('vectorNum').textContent = vectorValue;
+    document.querySelectorAll('.kinsey-node').forEach(n => n.classList.remove('active-node'));
+    let kIndex = 3; 
+    if (counts.user_is_man === 100) { kIndex = Math.round((vectorValue / 10) * 6); } 
+    else if (counts.user_is_woman === 100) { kIndex = Math.round(((10 - vectorValue) / 10) * 6); } 
+    else { kIndex = Math.round((vectorValue / 10) * 6); }
+    kIndex = Math.max(0, Math.min(6, kIndex));
+    document.getElementById(`k${kIndex}`).classList.add('active-node');
+    kinseyLabelValue = `K${kIndex}`;
+  }
+  
+  const targetCard = document.getElementById('targetCard');
+  targetCard.innerHTML = `
+    <div class="matrix-row">
+      <div class="matrix-info"><span>Attraction toward Men / Masculine presence</span><span class="matrix-pct">${targetMasc}%</span></div>
+      <div class="matrix-track"><div class="matrix-fill fill-masc" id="barMasc" style="width: 0%"></div></div>
+    </div>
+    <div class="matrix-row">
+      <div class="matrix-info"><span>Attraction toward Women / Feminine presence</span><span class="matrix-pct">${targetFem}%</span></div>
+      <div class="matrix-track"><div class="matrix-fill fill-fem" id="barFem" style="width: 0%"></div></div>
+    </div>
+    <div class="matrix-row">
+      <div class="matrix-info"><span>Attraction toward Non-Binary / Androgynous presence</span><span class="matrix-pct">${targetNb}%</span></div>
+      <div class="matrix-track"><div class="matrix-fill fill-nb" id="barNb" style="width: 0%"></div></div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    if (!isAsexualBaseline && (targetMasc > 0 || targetFem > 0)) { document.getElementById('vectorPin').style.left = `${vectorValue * 10}%`; }
+    document.getElementById('barRomantic').style.width = `${pctRomantic}%`;
+    document.getElementById('barPhysical').style.width = `${pctPhysical}%`;
+    document.getElementById('barSexual').style.width = `${pctSexual}%`;
+    document.getElementById('barDemi').style.width = `${demiScore}%`;
+    document.getElementById('barFluid').style.width = `${fluidScore}%`;
+    document.getElementById('barMasc').style.width = `${targetMasc}%`;
+    document.getElementById('barFem').style.width = `${targetFem}%`;
+    document.getElementById('barNb').style.width = `${targetNb}%`;
+  }, 50);
+
+  document.getElementById('pctRomantic').textContent = `${pctRomantic}%`;
+  document.getElementById('pctPhysical').textContent = `${pctPhysical}%`;
+  document.getElementById('pctSexual').textContent = `${pctSexual}%`;
+  document.getElementById('pctDemi').textContent = `${demiScore}%`;
+  document.getElementById('pctFluid').textContent = `${fluidScore}%`;
+
+  let mainIdentity = "Fluid Spectrum";
+  let subtitleText = "Flexible attraction scores that naturally shift.";
+  let summaryText = "Your attraction points indicate a highly variable pattern that moves smoothly across multiple options without anchoring rigidly into just one lane.";
+  let subPills = [];
+  const isAromanticBaseline = pctRomantic <= 25;
+
+  if (isAromanticBaseline && isAsexualBaseline) {
+    mainIdentity = "Aromantic + Asexual"; subtitleText = "Your baseline scores are very quiet across the board."; summaryText = "Your emotional and physical data indicators show that immediate personal attractions or relational needs operate on a highly muted level.";
+  } 
+  else if (targetMasc >= 40 && targetFem >= 40) {
+    const diff = Math.abs(targetMasc - targetFem);
+    if (diff <= 15) {
+      if (targetNb >= 60) { mainIdentity = "Pansexual"; subtitleText = "Attraction flows naturally regardless of gender."; summaryText = "Your feelings are driven by a person's heart, mind, and energy, looking right past gender labels entirely."; }
+      else { mainIdentity = "Bisexual"; subtitleText = "Attraction points toward two or more genders."; summaryText = "You show significant attraction markers pointing independently toward both masculine and feminine lanes without requiring an exclusive choice."; }
+    } else if (targetMasc > targetFem) {
+      mainIdentity = "Bisexual (Male-Leaning)"; subtitleText = "Attraction points to multiple genders, with a noticeable focus on men."; summaryText = "While you still have an open capacity to feel attraction toward women, your baseline measurements show a much stronger lean toward masculine targets.";
+    } else {
+      mainIdentity = "Bisexual (Female-Leaning)"; subtitleText = "Attraction points to multiple genders, with a noticeable focus on women."; summaryText = "While you still have an open capacity to feel attraction toward men, your baseline measurements show a much stronger lean toward feminine targets.";
+    }
+  } 
+  else if (targetMasc >= 60 && targetFem >= 20 && targetFem < 40) {
+    if (counts.user_is_man === 100) { mainIdentity = "Mostly Gay"; subtitleText = "Strong preference for men, with occasional exceptions."; }
+    else if (counts.user_is_woman === 100) { mainIdentity = "Mostly Straight"; subtitleText = "Strong preference for men, with occasional exceptions."; }
+    else { mainIdentity = "Mostly Masculine-Leaning"; subtitleText = "Strong focus on masculine targets with small trace exceptions."; }
+    summaryText = "You are primarily drawn to men, but your scores suggest you still have a small, occasional capacity for attraction toward women.";
+  }
+  else if (targetFem >= 60 && targetMasc >= 20 && targetMasc < 40) {
+    if (counts.user_is_woman === 100) { mainIdentity = "Mostly Lesbian"; subtitleText = "Strong preference for women, with occasional exceptions."; }
+    else if (counts.user_is_man === 100) { mainIdentity = "Mostly Straight"; subtitleText = "Strong preference for women, with exceptions."; }
+    else { mainIdentity = "Mostly Feminine-Leaning"; subtitleText = "Strong focus on feminine targets with small trace exceptions."; }
+    summaryText = "You are primarily drawn to women, but your scores suggest you still have a small, occasional capacity for attraction toward men.";
+  }
+  else if (targetMasc >= 50 && targetFem < 20) {
+    if (counts.user_is_man === 100) { mainIdentity = "Gay"; subtitleText = "Attraction is fully focused on men."; }
+    else if (counts.user_is_woman === 100) { mainIdentity = "Straight"; subtitleText = "Attraction is fully focused on men."; }
+    else { mainIdentity = "Men-Oriented"; subtitleText = "Primary structural mapping to masculine presentation."; }
+    summaryText = "Your target configurations point cleanly and exclusively toward masculine metrics. There are zero active scores pointing toward feminine streams.";
+  } 
+  else if (targetFem >= 50 && targetMasc < 20) {
+    if (counts.user_is_woman === 100) { mainIdentity = "Lesbian"; subtitleText = "Attraction is fully focused on women."; }
+    else if (counts.user_is_man === 100) { mainIdentity = "Straight"; subtitleText = "Attraction is fully focused on women."; }
+    else { mainIdentity = "Women-Oriented"; subtitleText = "Primary structural mapping to feminine presentation."; }
+    summaryText = "Your target configurations point cleanly and exclusively toward feminine metrics.";
+  }
+
+  document.getElementById('resIdentity').textContent = mainIdentity;
+  document.getElementById('resSubtitle').textContent = subtitleText;
+  document.getElementById('resSummary').textContent = summaryText;
+
+  if (counts.user_is_man === 100 && targetMasc >= 50 && targetFem < 20) subPills.push("gay");
+  if (counts.user_is_woman === 100 && targetFem >= 50 && targetMasc < 20) subPills.push("lesbian");
+  if ((counts.user_is_man === 100 && targetFem >= 50 && targetMasc < 20) || (counts.user_is_woman === 100 && targetMasc >= 50 && targetFem < 20)) subPills.push("straight");
+  if (targetMasc >= 60 && targetFem >= 20 && targetFem < 40) subPills.push(counts.user_is_man === 100 ? "mostly gay" : "mostly straight");
+  if (targetFem >= 60 && targetMasc >= 20 && targetMasc < 40) subPills.push(counts.user_is_woman === 100 ? "mostly lesbian" : "mostly straight");
+  if (targetMasc >= 40 && targetFem >= 40) subPills.push("bisexual");
+  if (targetMasc >= 40 && targetFem >= 40 && targetNb >= 60) subPills.push("pansexual");
+  if (isAsexualBaseline || aceScore >= 60) subPills.push("asexual");
+  if (isAromanticBaseline) subPills.push("aromantic");
+  if (demiScore >= 60) subPills.push("demisexual");
+  if (grayScore >= 60 || (pctSexual > 20 && pctSexual <= 45)) subPills.push("graysexual");
+  if (fluidScore >= 55) subPills.push("fluid");
+  if (targetMasc >= 55) subPills.push("androphilic");
+  if (targetFem >= 55) subPills.push("gynephilic");
+
+  const splitBox = document.getElementById('splitAttractionPanel');
+  splitBox.innerHTML = ""; 
+  let romanticLeaning = romMasc > romFem ? "Masculine" : (romFem > romMasc ? "Feminine" : "Balanced/Bi");
+  let sexualLeaning = mascSexAvg > femSexAvg ? "Masculine" : (femSexAvg > mascSexAvg ? "Feminine" : "Balanced/Bi");
+  
+  if (Math.abs(romMasc - mascSexAvg) > 35 || Math.abs(romFem - femSexAvg) > 35 || (romanticLeaning !== sexualLeaning && pctRomantic > 25 && pctSexual > 20)) {
+    splitBox.innerHTML = `
+      <div class="message-box msg-cross">
+        <strong>Split Attraction Detected:</strong> Your heart and your physical desires move on different tracks. You process romantic alignment indicators toward <strong>${romanticLeaning}</strong> expressions, while your sexual engine triggers separately toward <strong>${sexualLeaning}</strong> metrics.
+      </div>`;
+    splitBox.classList.remove('hidden');
+    subPills.push("split-attraction");
+  } else { splitBox.classList.add('hidden'); }
+
+  const latencyBox = document.getElementById('latencyMessageBox');
+  let adviceHTML = "";
+  
+  if (processingEnergy >= 65) {
+    latencyBox.innerHTML = `<div class="message-box msg-alert" style="margin-bottom:1rem;"><strong>High Mental Friction:</strong> You spend a lot of energy overthinking, sorting, or filtering your feelings.</div>`;
+    adviceHTML += `<li><strong>Stop Overthinking It:</strong> You might be trying to solve your feelings like a math problem. Practice just noticing what sparks your interest in real life without trying to fit it into a rigid box.</li>`;
+  } else {
+    latencyBox.innerHTML = `<div class="message-box msg-ok" style="margin-bottom:1rem;"><strong>Low Mental Friction:</strong> Your feelings flow naturally without heavy analytical gatekeeping.</div>`;
+    adviceHTML += `<li><strong>Trust Your Flow:</strong> Your system has a clear path. Trust your attractions as they appear without worrying too much about matching a past pattern.</li>`;
+  }
+
+  if (demiScore >= 60) adviceHTML += `<li><strong>Take Your Time:</strong> Because your emotional bond score is high (${demiScore}%), fast-paced 'swipe app' culture will likely feel broken or exhausting to you. Prioritize group hobbies, friendships, or shared tasks where safety can build slowly and naturally first.</li>`;
+  if (fluidScore >= 55) adviceHTML += `<li><strong>Embrace the Waves:</strong> Your feelings naturally change or shift intensity over time. Don't worry or feel like you 'lied to yourself' if your attraction to a certain gender goes totally quiet for a month; let the levels fluctuate naturally.</li>`;
+  if (isAsexualBaseline || isAromanticBaseline) adviceHTML += `<li><strong>Design Your Own Rules:</strong> Since your default physical or romantic scores are quiet, focus on building non-traditional connections centered around deep companionship, teamwork, or mental compatibility rather than standard dating milestones.</li>`;
+  if (adviceHTML === "") adviceHTML += `<li>Your scores indicate well-balanced, straightforward feelings. Explore connections that match up with your balance spectrum position.</li>`;
+  
+  document.getElementById('adviceList').innerHTML = adviceHTML;
+
+  const pillsContainer = document.getElementById('taxonomyPills');
+  let pillsHTML = ""; if(subPills.length === 0) subPills.push("unclassified");
+  const cleanUniquePills = [...new Set(subPills)];
+  cleanUniquePills.forEach(p => { pillsHTML += `<span class="badge-pill" onclick="openGlossary('${p}')">${p}</span>`; });
+  pillsContainer.innerHTML = pillsHTML;
+
+  finalScoreDataSnapshot = {
+    identity: mainIdentity, subtitle: subtitleText, summary: summaryText,
+    romantic: pctRomantic, physical: pctPhysical, sexual: pctSexual,
+    masc: targetMasc, fem: targetFem, nb: targetNb,
+    demi: demiScore, fluid: fluidScore, kinsey: kinseyLabelValue, vector: vectorValue,
+    labels: cleanUniquePills
+  };
+
+  // ==========================================
+  // 🔘 THE SURVEY DATA SWITCH
+  // ==========================================
+  // Want to save survey answers? Replace "PRIVATE" with your free Formspree ID.
+  const formspreeId = "PRIVATE"; 
+  
+  if (formspreeId && formspreeId !== "PRIVATE") {
+    fetch(`https://formspree.io/f/${formspreeId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(finalScoreDataSnapshot)
+    }).catch(err => console.log("Survey transmission bypassed"));
+  }
+
+  runCompletionConfetti();
+}
+
+function exportReport() {
+  if (!finalScoreDataSnapshot) return;
+  const s = finalScoreDataSnapshot;
+  const textOutput = `==================================================
+ATTRACTION EXPLORER SPECTRUM SUMMARY REPORT
+==================================================
+Core Alignment Identity: ${s.identity}
+Summary Profile: ${s.subtitle}\n
+Core Drive Percentages:
+- Romantic Vector: ${s.romantic}%
+- Physical/Aesthetic Vector: ${s.physical}%
+- Sexual Intimacy Vector: ${s.sexual}%\n
+Target Pull Metrics:
+- Men / Masculine Pull: ${s.masc}%
+- Women / Feminine Pull: ${s.fem}%
+- Non-Binary Target Pull: ${s.nb}%\n
+Timing & Context Drivers:
+- Emotional Bond Dependency Index: ${s.demi}%
+- Fluidity Frequency Level: ${s.fluid}%\n
+Spectrum Diagnostics:
+- Vector Continuum Score: ${s.vector}/10
+- Kinsey Scale Metric Match: ${s.kinsey}\n
+Verified Labels:
+${s.labels.map(l => `* ${l.toUpperCase()}`).join("\n")}
+==================================================`;
+
+  const blob = new Blob([textOutput], { type: "text/plain;charset=utf-8" });
+  const downloadLink = document.createElement("a");
+  downloadLink.href = URL.createObjectURL(blob);
+  downloadLink.download = `My_Attraction_Map.txt`;
+  document.body.appendChild(downloadLink); downloadLink.click(); document.body.removeChild(downloadLink);
+}
+
+function resetExplorer() {
+  if (finalScoreDataSnapshot) {
+    const confirmReset = confirm("Are you sure you want to start over? This will clear your current results map.");
+    if (!confirmReset) return;
+  }
+  safeStorage.removeItem('attractionExplorerState_v75');
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('quizSection').classList.remove('hidden');
+  document.getElementById('mainHeader').classList.remove('hidden');
+  document.getElementById('progressContainer').classList.remove('hidden');
+  finalScoreDataSnapshot = null;
+  initializeExplorer();
+}
+
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeModal(null); });
+initializeExplorer();
+</script>
+</body>
+</html>
+  }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes cascadeReveal {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .top-controls {
+    width: 100%; max-width: 600px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; gap: 1rem;
+  }
+
+  .welcome-note {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.88rem; color: var(--accent); line-height: 1.6;
+    flex: 1;
+  }
+
+  .theme-toggle-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    transition: all 0.2s;
+  }
+  .theme-toggle-btn:hover { border-color: var(--accent); transform: scale(1.04); }
+
+  header { width: 100%; max-width: 600px; margin-bottom: 1.8rem; }
+  .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.1rem, 5vw, 2.8rem); line-height: 1.2; color: var(--text); margin-bottom: 0.6rem; }
+  .intro-text { font-size: 0.98rem; color: var(--muted); line-height: 1.6; }
+
+  .progress-container { width: 100%; max-width: 600px; display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; }
+  .progress-track { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s ease; width: 0%; }
+  .progress-text { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+
+  .q-card { 
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; 
+    padding: 2rem; width: 100%; max-width: 600px; margin-bottom: 1rem; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.01);
+    animation: cardReveal 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .q-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+  .q-badge { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.25rem 0.7rem; border-radius: 99px; margin-bottom: 1rem; }
+  .badge-setup    { background: #E2E2E2; color: #555555; }
+  body.dark-mode .badge-setup { background: #333; color: #aaa; }
+  .badge-romantic { background: var(--warm-soft); color: var(--warm); }
+  .badge-physical { background: var(--pink-soft); color: var(--pink); }
+  .badge-sexual   { background: var(--accent-soft); color: var(--accent); }
+  .badge-energy   { background: var(--purple-soft); color: var(--purple); }
+  .q-text { font-family: 'DM Serif Display', serif; font-size: 1.35rem; line-height: 1.4; margin-bottom: 1.5rem; color: var(--text); }
+
+  .options-stack { display: flex; flex-direction: column; gap: 0.65rem; }
+  
+  .option-btn {
+    width: 100%; text-align: left; padding: 1rem 1.25rem; border-radius: 10px; 
+    border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; 
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500;
+    color: var(--text); transition: all 0.2s ease;
+    min-height: 44px; display: flex; align-items: center; gap: 0.8rem;
+  }
+  .option-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+  
+  .option-indicator {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--radio-circle);
+    display: inline-block; flex-shrink: 0; position: relative; transition: all 0.2s;
+  }
+  .option-btn.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .option-btn.selected .option-indicator {
+    border-color: var(--accent); background: var(--accent);
+  }
+  .option-btn.selected .option-indicator::after {
+    content: ''; position: absolute; width: 6px; height: 6px; background: #fff;
+    border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+
+  .nav-bar { display: flex; justify-content: space-between; width: 100%; max-width: 600px; margin-top: 0.5rem; gap: 0.5rem; }
+  .btn { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600; border-radius: 10px; padding: 0.8rem 1.6rem; cursor: pointer; border: none; transition: all 0.15s; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+  .alert-hint { font-size: 0.88rem; color: var(--warm); text-align: center; margin-top: 0.6rem; min-height: 1.5em; }
+
+  .result-container { width: 100%; max-width: 600px; }
+  .result-header { text-align: center; margin-bottom: 1.8rem; animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .result-identity-tag { font-family: 'DM Serif Display', serif; font-size: 2.5rem; color: var(--accent); margin-bottom: 0.6rem; line-height: 1.2; }
+  .result-subtitle { font-size: 1rem; color: var(--muted); line-height: 1.6; font-weight: 500; }
+  
+  .summary-box { background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 1.1rem; font-size: 0.92rem; line-height: 1.6; color: var(--text); margin-bottom: 2rem; animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards; opacity: 0; }
+
+  .result-panel { margin-bottom: 2.2rem; opacity: 0; }
+  .panel-title { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.7rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .panel-intro { font-size: 0.9rem; color: var(--muted); line-height: 1.5; margin-bottom: 1.2rem; }
+
+  .panel-1 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards; }
+  .panel-2 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s forwards; }
+  .panel-3 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.35s forwards; }
+  .panel-4 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards; }
+  .panel-5 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards; }
+  .panel-6 { animation: cascadeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s forwards; }
+
+  .matrix-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.01); }
+  .matrix-row { margin-bottom: 1.2rem; }
+  .matrix-row:last-child { margin-bottom: 0; }
+  .matrix-info { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text); margin-bottom: 0.4rem; font-weight: 500; }
+  .matrix-pct { font-size: 0.85rem; color: var(--muted); }
+  .matrix-track { height: 10px; background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); position: relative; }
+  .matrix-fill { height: 100%; border-radius: 99px; transition: width 1.1s cubic-bezier(0.16, 1, 0.3, 1); width: 0%; }
+  
+  .breakdown-details { margin-top: 0.5rem; font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+  .breakdown-details summary {
+    cursor: pointer; list-style: none; font-size: 0.78rem; text-transform: uppercase;
+    font-weight: 600; letter-spacing: 0.04em; color: var(--accent); display: inline-flex; align-items: center; gap: 0.3rem;
+  }
+  .breakdown-details summary::-webkit-details-marker { display: none; }
+  .breakdown-details summary::before { content: '▸'; }
+  .breakdown-details[open] summary::before { content: '▾'; }
+  .breakdown-content { padding: 0.5rem 0.6rem; background: var(--bg); border-radius: 6px; margin-top: 0.3rem; }
+
+  .fill-romantic { background: var(--warm); }
+  .fill-physical { background: var(--pink); }
+  .fill-sexual   { background: var(--accent); }
+  .fill-bond     { background: var(--purple); }
+  .fill-fluid    { background: #616A7D; }
+  
+  .fill-masc { background: #557E96; }
+  .fill-fem { background: #DDA076; }
+  .fill-nb { background: #967BB0; }
+
+  .vector-track { height: 14px; background: linear-gradient(to right, #DDA076 0%, #E2E2E2 50%, #557E96 100%); border-radius: 99px; position: relative; border: 1px solid var(--border); margin-bottom: 0.4rem; }
+  body.dark-mode .vector-track { background: linear-gradient(to right, #A06F4D, #2B2B2B 50%, #3D647A); }
+  .vector-pin { position: absolute; width: 5px; height: 20px; background: var(--text); top: -4px; border-radius: 99px; transform: translateX(-50%); transition: left 1.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 0 4px rgba(0,0,0,0.2); }
+  .vector-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); font-weight: 600; padding: 0 0.1rem; text-transform: uppercase; letter-spacing: 0.02em; }
+
+  .kinsey-description { font-size: 0.85rem; color: var(--muted); line-height: 1.5; margin: 1.2rem 0 0; background: var(--bg); padding: 0.8rem; border-radius: 8px; border-left: 2px solid var(--muted); }
+  .kinsey-grid { display: flex; justify-content: space-between; gap: 4px; margin-top: 0.5rem; }
+  .kinsey-node { flex: 1; text-align: center; background: var(--bg); border: 1px solid var(--border); padding: 0.4rem 0.2rem; border-radius: 6px; font-size: 0.72rem; font-weight: 600; color: var(--muted); transition: all 0.4s ease; }
+  .kinsey-node.active-node { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.04); }
+
+  .message-box { border-radius: 12px; padding: 1.2rem; font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.5rem; border-left: 4px solid transparent; }
+  .msg-alert { background: var(--purple-soft); border-color: var(--purple); color: var(--text); }
+  .msg-cross { background: var(--warm-soft); border-color: var(--warm); color: var(--text); }
+  .msg-ok { background: var(--green-soft); border-color: var(--green); color: var(--text); }
+
+  .pills-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .badge-pill { background: var(--accent-soft); border: 1px solid var(--border); color: var(--accent); border-radius: 99px; padding: 0.4rem 1rem; font-size: 0.85rem; font-weight: 600; text-transform: capitalize; cursor: pointer; transition: all 0.15s; }
+  .badge-pill:hover { transform: translateY(-1.5px); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;
+    z-index: 1000; padding: 1.2rem; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-window {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.8rem; width: 100%; max-width: 460px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transform: scale(0.95); transition: transform 0.25s ease;
+  }
+  .modal-overlay.active .modal-window { transform: scale(1); }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; margin-bottom: 0.6rem; text-transform: capitalize; }
+  .modal-desc { font-size: 0.92rem; line-height: 1.6; color: var(--text); margin-bottom: 1.5rem; }
+
+  .advice-list { margin-top: 0.6rem; padding-left: 1.2rem; }
+  .advice-list li { font-size: 0.9rem; line-height: 1.5; margin-bottom: 0.5rem; color: var(--text); }
+
+  .hidden { display: none !important; }
+  @media (max-width: 500px) { .result-identity-tag { font-size: 2.1rem; } }
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="background: #FAF2EC; color: #D18453; padding: 2rem
